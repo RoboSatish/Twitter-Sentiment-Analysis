@@ -1,0 +1,1039 @@
+import stop_words
+import tweepy, codecs
+import pandas as pd
+import csv
+from more_itertools import unique_everseen
+import re
+import nltk
+from nltk.corpus import stopwords
+from textblob import TextBlob
+from textblob import Blobber
+from newspaper import Article
+import codecs
+
+consumer_key = "1llMerypw6DIjPy1APP4le8Sk"
+consumer_secret = "aYdO4wVU9IuGyykszLhkzda6okENhKMoL2gD6IH4cp4a3Ax0Gl"
+access_token = "1187925764508803072-7oqvxvO1K61izrSMNkPQLUNdKdtLnf"
+access_token_secret = "4nyyZYapk5yMg5F8bDyFj8kDLRyYAECQSqYOdt9Ka0Ye2"
+
+# let Tweepy set up an instance of the REST API
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_token_secret)
+api = tweepy.API(auth)
+
+# Creating the API object while passing in auth information
+api = tweepy.API(auth)
+
+# The search term you want to find
+query = " Padmavat Movie"
+# Language code (follows ISO 639-1 standards)
+language = "en"
+
+# Calling the user_timeline function with our parameters
+results = api.search(q=query, count=10000, since="2016-04-03", lang=language)
+# csvFile = open('D:/tweetcsv/demo/s1','a',newline='')
+csvFile = open('tweetcsv/demo/s1.csv', 'a', newline='')
+csvWriter = csv.writer(csvFile)
+
+with open('tweetcsv/demo/s1.csv', 'a', newline='') as csvFile:
+    fieldnames = ['Tweets']
+    writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
+    writer.writeheader()
+    # foreach through all tweets pulled
+    for tweet in results:
+        writer.writerows([{'Tweets': tweet.text.encode('utf-8')}])
+    text = pd.read_csv('tweetcsv/demo/s1.csv')
+    print(text.Tweets)
+
+with open('tweetcsv/demo/s1.csv', 'r') as f, open('tweetcsv/demo/s2', 'w', newline='') as out_file:
+    out_file.writelines(unique_everseen(f))
+    text_without_duplicate = pd.read_csv('tweetcsv/demo/s2.csv')
+    py1 = text_without_duplicate.Tweets
+
+list_of_text = []
+for each in (py1):
+    String_first = str(each)
+    clean_tweets = ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)", " ", String_first).split())
+    list_of_text.append(clean_tweets)
+    list_of_text
+    print(list_of_text)
+
+import nltk
+
+nltk.download('stopwords')
+from nltk.corpus import stopwords
+
+# stop_words = set(['a', 'an','the','in','b', 'and', 'or' ,'Retweeted','x','xe2','x99','x9'])
+
+with open('tweetcsv/demo/demo2_sentiment.csv', 'a', newline='') as csvFile:
+    fieldnames = ['Tweets', 'Polarity', 'Sentiment']
+    writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
+    writer.writeheader()
+for each in (list_of_text):
+    x = str(each)
+    blob1 = TextBlob(x)
+    blob1.tags  # [('The', 'DT'), ('titular', 'JJ'),
+    #  ('threat', 'NN'), ('of', 'IN'), ...]
+    blob1.noun_phrases
+    # WordList(['titular threat', 'blob',
+    # 'ultimate movie monster',
+    # 'amoeba-like mass', ...])
+    # blob.words
+    currect_word = blob1.correct()
+    # sub_stopwords = set(currect_word.words) - stop_words
+    sub_stopwords = set(stopwords.words('english'))
+    final_string = ' '
+    for word in sub_stopwords:
+        final_string = final_string + word + ' '
+    blob2 = TextBlob(final_string)
+    polarity = blob2.sentiment.polarity
+    if polarity == 0:
+        print("neutral")
+        with open('tweetcsv/demo/demo2_sentiment.csv', 'a', newline='') as csvFile:
+            writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
+            writer.writerows([{'Tweets': blob2, 'Polarity': polarity, 'Sentiment': "neutral"}])
+    else:
+        if polarity < 0:
+            print("negative")
+            with open('tweetcsv/demo/demo2_sentiment.csv', 'a', newline='') as csvFile:
+                writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
+                writer.writerows([{'Tweets': blob2, 'Polarity': polarity, 'Sentiment': "negative"}])
+        else:
+            print("positive")
+            with open('tweetcsv/demo/demo2_sentiment.csv', 'a', newline='') as csvFile:
+                writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
+                writer.writerows([{'Tweets': blob2, 'Polarity': polarity, 'Sentiment': "positive"}])
+
+url = 'https://theconversation.com/after-quebec-whats-the-future-for-keystone-xl-15971'
+article = Article(url)
+news_article = article.download()
+article.parse()
+article_text = article.text
+print(article_text)
+
+# article_text_to_english =TextBlob(article_text)
+# english_lag=article_text_to_english.translate(to="en")
+# article_text_to_english_to_string =str(english_lag)
+
+
+blob = TextBlob(article_text)
+blob.tags  # [('The', 'DT'), ('titular', 'JJ'),
+#  ('threat', 'NN'), ('of', 'IN'), ...]
+blob.noun_phrases  # WordList(['titular threat', 'blob',
+#            'ultimate movie monster',
+#            'amoeba-like mass', ...])
+
+total_number_of_sentences = 0
+total_polarity_of_sentences = 0.0
+mean_total_polarity_of_sentences = 0.0
+
+total_negative_sentences = 0
+total_of_negative_polarity_sentences = 0.0
+mean_negative_polarity_sentences = 0.0
+
+percentage_of_negative_sentences = 0
+
+for sentence in blob.sentences:
+    polarity_phrases = sentence.sentiment.polarity
+
+    total_number_of_sentences = total_number_of_sentences + 1
+    total_polarity_of_sentences = polarity_phrases + total_polarity_of_sentences
+    mean_total_polarity_of_sentences = total_polarity_of_sentences / total_number_of_sentences
+
+    if polarity_phrases < 0:
+        total_negative_sentences = total_negative_sentences + 1
+
+        total_of_negative_polarity_sentences = polarity_phrases + total_of_negative_polarity_sentences
+
+        mean_negative_polarity_sentences = total_of_negative_polarity_sentences / total_negative_sentences
+
+percentage_of_negative_sentences = ((total_negative_sentences / total_number_of_sentences) * 100)
+
+print(total_number_of_sentences)
+print(total_polarity_of_sentences)
+print(mean_total_polarity_of_sentences)
+print(total_negative_sentences)
+print(total_of_negative_polarity_sentences)
+print(mean_negative_polarity_sentences)
+print(percentage_of_negative_sentences)
+
+with open('tweetcsv/demo/demo2_final_article.csv', 'a', newline='') as csvFile:
+    fieldnames = ['News_or_Events', 'Article_Number', 'Total_Number_of_Sentences', 'Total_Polarity_of_Sentences',
+                  'Mean_Total_Polarity_of_Sentences', 'Total_Negative_Sentences',
+                  'Total_of_Negative_Polarity_Sentences', 'Mean_Negative_Polarity_Sentences',
+                  'Percentage_of_Negative_Sentences']
+    writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
+    writer.writerows([{'News_or_Events': " ", 'Article_Number': '9',
+                       'Total_Number_of_Sentences': total_number_of_sentences,
+                       'Total_Polarity_of_Sentences': total_polarity_of_sentences,
+                       'Mean_Total_Polarity_of_Sentences': mean_total_polarity_of_sentences,
+                       'Total_Negative_Sentences': total_negative_sentences,
+                       'Total_of_Negative_Polarity_Sentences': total_of_negative_polarity_sentences,
+                       'Mean_Negative_Polarity_Sentences': mean_negative_polarity_sentences,
+                       'Percentage_of_Negative_Sentences': percentage_of_negative_sentences}])
+
+Article_total = pd.read_csv('tweetcsv/demo/demo2_final_article.csv')
+Article_total
+
+t_s = Article_total.Total_Number_of_Sentences.sum()
+t_polarity_s = Article_total.Total_Polarity_of_Sentences.sum()
+m_t_polarity_s = Article_total.Mean_Total_Polarity_of_Sentences.mean()
+t_n_s = Article_total.Total_Negative_Sentences.sum()
+t_n_polarity_s = Article_total.Total_of_Negative_Polarity_Sentences.sum()
+m_n_polarity_s = Article_total.Mean_Negative_Polarity_Sentences.mean()
+per_n_s = (t_n_s / t_s) * 100
+
+print(t_s)
+print(t_polarity_s)
+print(m_t_polarity_s)
+print(t_n_s)
+print(t_n_polarity_s)
+print(m_n_polarity_s)
+print(per_n_s)
+
+with open('tweetcsv/demo/demo2_final_article_total.csv', 'a', newline='') as csvFile:
+    fieldnames = ['News_or_Events', 'Total_Number_of_Sentences', 'Total_Polarity_of_Sentences',
+                  'Mean_Total_Polarity_of_Sentences', 'Total_Negative_Sentences',
+                  'Total_of_Negative_Polarity_Sentences', 'Mean_Negative_Polarity_Sentences',
+                  'Percentage_of_Negative_Sentences']
+    writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
+    writer.writeheader()
+
+    # writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
+    writer.writerows([{'News_or_Events': "spot settling in IPL", 'Total_Number_of_Sentences': t_s,
+                       'Total_Polarity_of_Sentences': t_polarity_s, 'Mean_Total_Polarity_of_Sentences': m_t_polarity_s,
+                       'Total_Negative_Sentences': t_n_s, 'Total_of_Negative_Polarity_Sentences': t_n_polarity_s,
+                       'Mean_Negative_Polarity_Sentences': m_n_polarity_s,
+                       'Percentage_of_Negative_Sentences': per_n_s}])
+
+print("*************************************************")
+
+k = 0
+# per_n_s = 18.705035971223023
+# m_n_polarity_s = -0.161176729
+if ((per_n_s < 10) or (per_n_s > 90) or (m_n_polarity_s < (-1)) or (m_n_polarity_s >= (0))):
+    print("this event or news is Non-Controversial ")
+elif (m_n_polarity_s >= (-1) and m_n_polarity_s < (-0.9)):
+    if per_n_s >= 10 and per_n_s <= 50:
+        k = -2
+        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+        print(cs_of_sentences)
+    else:
+        if per_n_s > 50 and per_n_s <= 60:
+            k = -1.33
+            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+            print(cs_of_sentences)
+        else:
+            if per_n_s > 60 and per_n_s <= 70:
+                k = -0.85
+                cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                print(cs_of_sentences)
+            else:
+                if per_n_s > 70 and per_n_s <= 80:
+                    k = -0.5
+                    cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                    print(cs_of_sentences)
+                else:
+                    k = -0.22
+                    cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                    print(cs_of_sentences)
+elif (m_n_polarity_s >= (-0.9) and m_n_polarity_s < (-0.8)):
+    if per_n_s >= 10 and per_n_s <= 25:
+        k = -1.71
+        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+        print(cs_of_sentences)
+    else:
+        if per_n_s > 25 and per_n_s <= 35:
+            k = -1.74
+            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+            print(cs_of_sentences)
+        else:
+            if per_n_s > 35 and per_n_s <= 45:
+                k = -1.755
+                cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                print(cs_of_sentences)
+            else:
+                if per_n_s > 45 and per_n_s <= 55:
+                    k = -1.764
+                    cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                    print(cs_of_sentences)
+                else:
+                    if per_n_s > 55 and per_n_s <= 65:
+                        k = -1.17
+                        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                        print(cs_of_sentences)
+                    else:
+                        if per_n_s > 65 and per_n_s <= 75:
+                            k = -0.7452
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        if per_n_s > 75 and per_n_s <= 85:
+                            k = -0.4275
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        else:
+                            k = -0.19
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+elif (m_n_polarity_s >= (-0.8) and m_n_polarity_s < (-0.7)):
+    if per_n_s >= 10 and per_n_s <= 25:
+        k = -1.44
+        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+        print(cs_of_sentences)
+    else:
+        if per_n_s > 25 and per_n_s <= 35:
+            k = -1.49
+            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+            print(cs_of_sentences)
+        else:
+            if per_n_s > 35 and per_n_s <= 45:
+                k = -1.52
+                cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                print(cs_of_sentences)
+            else:
+                if per_n_s > 45 and per_n_s <= 55:
+                    k = -1.536
+                    cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                    print(cs_of_sentences)
+                else:
+                    if per_n_s > 55 and per_n_s <= 65:
+                        k = -1.013
+                        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                        print(cs_of_sentences)
+                    else:
+                        if per_n_s > 65 and per_n_s <= 75:
+                            k = -0.64
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        if per_n_s > 75 and per_n_s <= 85:
+                            k = -0.36
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        else:
+                            k = -0.16
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+elif (m_n_polarity_s >= (-0.7) and m_n_polarity_s < (-0.6)):
+    if per_n_s >= 10 and per_n_s <= 25:
+        k = -1.19
+        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+        print(cs_of_sentences)
+    else:
+        if per_n_s > 25 and per_n_s <= 35:
+            k = -1.26
+            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+            print(cs_of_sentences)
+        else:
+            if per_n_s > 35 and per_n_s <= 45:
+                k = -1.295
+                cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                print(cs_of_sentences)
+            else:
+                if per_n_s > 45 and per_n_s <= 55:
+                    k = -1.316
+                    cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                    print(cs_of_sentences)
+                else:
+                    if per_n_s > 55 and per_n_s <= 65:
+                        k = -0.863
+                        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                        print(cs_of_sentences)
+                    else:
+                        if per_n_s > 65 and per_n_s <= 75:
+                            k = -0.54
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        if per_n_s > 75 and per_n_s <= 85:
+                            k = -0.2975
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        else:
+                            k = -0.132
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+elif (m_n_polarity_s >= (-0.6) and m_n_polarity_s < (-0.5)):
+    if per_n_s >= 10 and per_n_s <= 25:
+        k = -0.96
+        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+        print(cs_of_sentences)
+    else:
+        if per_n_s > 25 and per_n_s <= 35:
+            k = -1.04
+            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+            print(cs_of_sentences)
+        else:
+            if per_n_s > 35 and per_n_s <= 45:
+                k = -1.08
+                cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                print(cs_of_sentences)
+            else:
+                if per_n_s > 45 and per_n_s <= 55:
+                    k = -1.104
+                    cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                    print(cs_of_sentences)
+                else:
+                    if per_n_s > 55 and per_n_s <= 65:
+                        k = -0.72
+                        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                        print(cs_of_sentences)
+                    else:
+                        if per_n_s > 65 and per_n_s <= 75:
+                            k = -0.445
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        if per_n_s > 75 and per_n_s <= 85:
+                            k = -0.24
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        else:
+                            k = -0.106
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+elif (m_n_polarity_s >= (-0.5) and m_n_polarity_s < (-0.4)):
+    if per_n_s >= 10 and per_n_s <= 25:
+        k = -0.75
+        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+        print(cs_of_sentences)
+    else:
+        if per_n_s > 25 and per_n_s <= 35:
+            k = -0.83
+            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+            print(cs_of_sentences)
+        else:
+            if per_n_s > 35 and per_n_s <= 45:
+                k = -0.875
+                cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                print(cs_of_sentences)
+            else:
+                if per_n_s > 45 and per_n_s <= 55:
+                    k = -0.9
+                    cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                    print(cs_of_sentences)
+                else:
+                    if per_n_s > 55 and per_n_s <= 65:
+                        k = -0.58
+                        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                        print(cs_of_sentences)
+                    else:
+                        if per_n_s > 65 and per_n_s <= 75:
+                            k = -0.3571
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        if per_n_s > 75 and per_n_s <= 85:
+                            k = -0.1875
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        else:
+                            k = -0.083
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+elif (m_n_polarity_s >= (-0.4) and m_n_polarity_s < (-0.3)):
+    if per_n_s >= 10 and per_n_s <= 25:
+        k = -0.56
+        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+        print(cs_of_sentences)
+    else:
+        if per_n_s > 25 and per_n_s <= 35:
+            k = -0.64
+            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+            print(cs_of_sentences)
+        else:
+            if per_n_s > 35 and per_n_s <= 45:
+                k = -0.68
+                cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                print(cs_of_sentences)
+            else:
+                if per_n_s > 45 and per_n_s <= 55:
+                    k = -0.704
+                    cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                    print(cs_of_sentences)
+                else:
+                    if per_n_s > 55 and per_n_s <= 65:
+                        k = -0.45
+                        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                        print(cs_of_sentences)
+                    else:
+                        if per_n_s > 65 and per_n_s <= 75:
+                            k = -0.274
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        if per_n_s > 75 and per_n_s <= 85:
+                            k = -0.14
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        else:
+                            k = -0.062
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+elif (m_n_polarity_s >= (-0.3) and m_n_polarity_s < (-0.2)):
+    if per_n_s >= 10 and per_n_s <= 25:
+        k = -0.39
+        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+        print(cs_of_sentences)
+    else:
+        if per_n_s > 25 and per_n_s <= 35:
+            k = -0.46
+            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+            print(cs_of_sentences)
+        else:
+            if per_n_s > 35 and per_n_s <= 45:
+                k = -0.495
+                cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                print(cs_of_sentences)
+            else:
+                if per_n_s > 45 and per_n_s <= 55:
+                    k = -0.516
+                    cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                    print(cs_of_sentences)
+                else:
+                    if per_n_s > 55 and per_n_s <= 65:
+                        k = -0.33
+                        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                        print(cs_of_sentences)
+                    else:
+                        if per_n_s > 65 and per_n_s <= 75:
+                            k = -0.197
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        if per_n_s > 75 and per_n_s <= 85:
+                            k = -0.097
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        else:
+                            k = -0.043
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+elif (m_n_polarity_s >= (-0.2) and m_n_polarity_s < (-0.1)):
+    if per_n_s >= 10 and per_n_s <= 25:
+        k = -0.24
+        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+        print(cs_of_sentences)
+    else:
+        if per_n_s > 25 and per_n_s <= 35:
+            k = -0.29
+            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+            print(cs_of_sentences)
+        else:
+            if per_n_s > 35 and per_n_s <= 45:
+                k = -0.32
+                cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                print(cs_of_sentences)
+            else:
+                if per_n_s > 45 and per_n_s <= 55:
+                    k = -0.336
+                    cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                    print(cs_of_sentences)
+                else:
+                    if per_n_s > 55 and per_n_s <= 65:
+                        k = -0.213
+                        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                        print(cs_of_sentences)
+                    else:
+                        if per_n_s > 65 and per_n_s <= 75:
+                            k = -0.125
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        if per_n_s > 75 and per_n_s <= 85:
+                            k = -0.06
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        else:
+                            k = -0.026
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+elif (m_n_polarity_s >= (-0.1) and m_n_polarity_s < (0)):
+    if per_n_s >= 10 and per_n_s <= 15:
+        k = -0.1
+        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+        print(cs_of_sentences)
+    else:
+        if per_n_s > 15 and per_n_s <= 25:
+            k = -0.11
+            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+            print(cs_of_sentences)
+        else:
+            if per_n_s > 25 and per_n_s <= 35:
+                k = -0.14
+                cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                print(cs_of_sentences)
+            else:
+                if per_n_s > 35 and per_n_s <= 45:
+                    k = -0.155
+                    cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                    print(cs_of_sentences)
+                else:
+                    if per_n_s > 45 and per_n_s <= 55:
+                        k = -0.164
+                        cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                        print(cs_of_sentences)
+                    else:
+                        if per_n_s > 55 and per_n_s <= 65:
+                            k = -0.103
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        if per_n_s > 65 and per_n_s <= 75:
+                            k = -0.06
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        if per_n_s > 75 and per_n_s <= 85:
+                            k = -0.0275
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+                        else:
+                            k = -0.011
+                            cs_of_sentences = (per_n_s * k) / (m_n_polarity_s * 100)
+                            print(cs_of_sentences)
+
+count = pd.read_csv("tweetcsv/demo/demo2_sentiment.csv")
+
+total_comments = 0
+total_polarity_of_comments = 0.0
+# print(type(total_polarity_of_comments))
+mean_of_total_polarity_of_comments = 0.0
+total_negative_comments = 0
+total_of_negative_polarity_comments = 0.0
+mean_of_negative_polarity_comments = 0.0
+percentage_of_negative_comments = 0
+
+# for each in (count.Polarity):
+c1 = count.Polarity
+print(c1)
+for each in range (0,10):
+    total_comments = total_comments + 1
+    total_polarity_of_comments = each + total_polarity_of_comments
+    mean_of_total_polarity_of_comments = total_polarity_of_comments / total_comments
+
+    if each < 0:
+        total_negative_comments = total_negative_comments + 1
+
+        total_of_negative_polarity_comments = each + total_of_negative_polarity_comments
+
+        mean_of_negative_polarity_comments = total_of_negative_polarity_comments / total_negative_comments
+
+percentage_of_negative_comments = ((total_negative_comments / total_comments) * 100)
+
+print(total_comments)
+print(total_polarity_of_comments)
+print(total_negative_comments)
+print(total_of_negative_polarity_comments)
+print(percentage_of_negative_comments)
+
+print(mean_of_total_polarity_of_comments)
+print(mean_of_negative_polarity_comments)
+
+with open('tweetcsv/demo/demo2_final_comments_total.csv', 'a') as csvFile:
+    fieldnames = ['News_or_Events', 'Total_Comments', 'Total_Polarity_of_Comments', 'Total_Negative_Comments',
+                  'Total_of_Negative_Polarity_Comments', 'Percentage_of_Negative_Comments',
+                  'Mean_of_Total_Polarity_of_Comments', 'Mean_of_Negative_Polarity_Comments']
+    writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
+    writer.writeheader()
+
+    # writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
+    writer.writerows([{'News_or_Events': "spot settling in IPL", 'Total_Comments': total_comments,
+                       'Total_Polarity_of_Comments': total_polarity_of_comments,
+                       'Total_Negative_Comments': total_negative_comments,
+                       'Total_of_Negative_Polarity_Comments': total_of_negative_polarity_comments,
+                       'Percentage_of_Negative_Comments': percentage_of_negative_comments,
+                       'Mean_of_Total_Polarity_of_Comments': mean_of_total_polarity_of_comments,
+                       'Mean_of_Negative_Polarity_Comments': mean_of_negative_polarity_comments}])
+
+print("+*********************************************+")
+k = 0
+cs_of_comments=0
+#percentage_of_negative_comments = 44.03669724770643
+#mean_of_negative_polarity_comments = -0.116333912037
+if ((percentage_of_negative_comments <10) or  (percentage_of_negative_comments >90) or (mean_of_negative_polarity_comments <(-1)) or (mean_of_negative_polarity_comments >=(0)) ):
+    print("this event or news is Non-Controversial ")
+elif(mean_of_negative_polarity_comments >= (-1) and mean_of_negative_polarity_comments < (-0.9)):
+    if percentage_of_negative_comments >= 10 and percentage_of_negative_comments <= 55:
+        k=-2
+        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+        print(cs_of_comments)
+    else:
+        if percentage_of_negative_comments > 55 and percentage_of_negative_comments <= 65:
+            k=-1.33
+            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+            print(cs_of_comments)
+
+        else:
+            if percentage_of_negative_comments > 65 and percentage_of_negative_comments <= 75:
+                k=-0.85
+                cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                print(cs_of_comments)
+            else:
+                if percentage_of_negative_comments > 75 and percentage_of_negative_comments <= 85:
+                    k=-0.5
+                    cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                    print(cs_of_comments)
+                else:
+                    k=-0.22
+                    cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                    print(cs_of_comments)
+
+elif(m_n_polarity_s >=(-0.9) and m_n_polarity_s < (-0.8)):
+    if percentage_of_negative_comments >= 10 and percentage_of_negative_comments <= 25:
+        k=-1.71
+        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+        print(cs_of_comments)
+    else:
+        if percentage_of_negative_comments > 25 and percentage_of_negative_comments <= 35:
+            k=-1.74
+            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+            print(cs_of_comments)
+        else:
+            if percentage_of_negative_comments > 35 and percentage_of_negative_comments <= 45:
+                k=-1.755
+                cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                print(cs_of_comments)
+            else:
+                if percentage_of_negative_comments > 45  and percentage_of_negative_comments <= 55:
+                    k=-1.764
+                    cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                    print(cs_of_comments)
+                else:
+                    if percentage_of_negative_comments > 55  and percentage_of_negative_comments <= 65:
+                        k=-1.17
+                        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                        print(cs_of_comments)
+                    else:
+                        if percentage_of_negative_comments > 65  and percentage_of_negative_comments <= 75:
+                            k=-0.7452
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        if percentage_of_negative_comments > 75  and percentage_of_negative_comments <= 85:
+                            k=-0.4275
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        else:
+                            k=-0.19
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+
+elif(mean_of_negative_polarity_comments >=(-0.8) and mean_of_negative_polarity_comments < (-0.7)):
+    if percentage_of_negative_comments >= 10 and percentage_of_negative_comments <= 25:
+        k=-1.44
+        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+        print(cs_of_comments)
+    else:
+        if percentage_of_negative_comments > 25 and percentage_of_negative_comments <= 35:
+            k=-1.49
+            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+            print(cs_of_comments)
+        else:
+            if percentage_of_negative_comments > 35 and percentage_of_negative_comments <= 45:
+                k=-1.52
+                cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                print(cs_of_comments)
+            else:
+                if percentage_of_negative_comments > 45  and percentage_of_negative_comments <= 55:
+                    k=-1.536
+                    cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                    print(cs_of_comments)
+                else:
+                    if percentage_of_negative_comments > 55  and percentage_of_negative_comments <= 65:
+                        k=-1.013
+                        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                        print(cs_of_comments)
+                    else:
+                        if percentage_of_negative_comments > 65  and percentage_of_negative_comments <= 75:
+                            k=-0.64
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        if percentage_of_negative_comments > 75  and percentage_of_negative_comments <= 85:
+                            k=-0.36
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        else:
+                            k=-0.16
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+elif(mean_of_negative_polarity_comments >=(-0.7) and mean_of_negative_polarity_comments < (-0.6)):
+    if percentage_of_negative_comments >= 10 and percentage_of_negative_comments <= 25:
+        k=-1.19
+        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+        print(cs_of_comments)
+    else:
+        if percentage_of_negative_comments > 25 and percentage_of_negative_comments <= 35:
+            k=-1.26
+            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+            print(cs_of_comments)
+        else:
+            if percentage_of_negative_comments > 35 and percentage_of_negative_comments <= 45:
+                k=-1.295
+                cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                print(cs_of_comments)
+            else:
+                if percentage_of_negative_comments > 45  and percentage_of_negative_comments <= 55:
+                    k=-1.316
+                    cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                    print(cs_of_comments)
+                else:
+                    if percentage_of_negative_comments > 55  and percentage_of_negative_comments <= 65:
+                        k=-0.863
+                        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                        print(cs_of_comments)
+                    else:
+                        if percentage_of_negative_comments > 65  and percentage_of_negative_comments <= 75:
+                            k=-0.54
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        if percentage_of_negative_comments > 75  and percentage_of_negative_comments <= 85:
+                            k=-0.2975
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        else:
+                            k=-0.132
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+elif(mean_of_negative_polarity_comments >=(-0.6) and mean_of_negative_polarity_comments < (-0.5)):
+    if percentage_of_negative_comments >= 10 and percentage_of_negative_comments <= 25:
+        k=-0.96
+        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+        print(cs_of_comments)
+    else:
+        if percentage_of_negative_comments > 25 and percentage_of_negative_comments <= 35:
+            k=-1.04
+            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+            print(cs_of_comments)
+        else:
+            if percentage_of_negative_comments > 35 and percentage_of_negative_comments <= 45:
+                k=-1.08
+                cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                print(cs_of_comments)
+            else:
+                if percentage_of_negative_comments > 45  and percentage_of_negative_comments <= 55:
+                    k=-1.104
+                    cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                    print(cs_of_comments)
+                else:
+                    if percentage_of_negative_comments > 55  and percentage_of_negative_comments <= 65:
+                        k=-0.72
+                        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                        print(cs_of_comments)
+                    else:
+                        if percentage_of_negative_comments > 65  and percentage_of_negative_comments <= 75:
+                            k=-0.445
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        if percentage_of_negative_comments > 75  and percentage_of_negative_comments <= 85:
+                            k=-0.24
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        else:
+                            k=-0.106
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+elif(mean_of_negative_polarity_comments >=(-0.5) and mean_of_negative_polarity_comments < (-0.4)):
+    if percentage_of_negative_comments >= 10 and percentage_of_negative_comments <= 25:
+        k=-0.75
+        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+        print(cs_of_comments)
+    else:
+        if percentage_of_negative_comments > 25 and percentage_of_negative_comments <= 35:
+            k=-0.83
+            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+            print(cs_of_comments)
+        else:
+            if percentage_of_negative_comments > 35 and percentage_of_negative_comments <= 45:
+                k=-0.875
+                cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                print(cs_of_comments)
+            else:
+                if percentage_of_negative_comments > 45  and percentage_of_negative_comments <= 55:
+                    k=-0.9
+                    cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                    print(cs_of_comments)
+                else:
+                    if percentage_of_negative_comments > 55  and percentage_of_negative_comments <= 65:
+                        k=-0.58
+                        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                        print(cs_of_comments)
+                    else:
+                        if percentage_of_negative_comments > 65  and percentage_of_negative_comments <= 75:
+                            k=-0.3571
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        if percentage_of_negative_comments > 75  and percentage_of_negative_comments <= 85:
+                            k=-0.1875
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_sentences)
+                        else:
+                            k=-0.083
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+elif(mean_of_negative_polarity_comments >=(-0.4) and mean_of_negative_polarity_comments < (-0.3)):
+    if percentage_of_negative_comments >= 10 and percentage_of_negative_comments <= 25:
+        k=-0.56
+        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+        print(cs_of_comments)
+    else:
+        if percentage_of_negative_comments > 25 and percentage_of_negative_comments <= 35:
+            k=-0.64
+            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+            print(cs_of_comments)
+        else:
+            if percentage_of_negative_comments > 35 and percentage_of_negative_comments <= 45:
+                k=-0.68
+                cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                print(cs_of_comments)
+            else:
+                if percentage_of_negative_comments > 45  and percentage_of_negative_comments <= 55:
+                    k=-0.704
+                    cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                    print(cs_of_comments)
+                else:
+                    if percentage_of_negative_comments > 55  and percentage_of_negative_comments <= 65:
+                        k=-0.45
+                        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                        print(cs_of_comments)
+                    else:
+                        if percentage_of_negative_comments > 65  and percentage_of_negative_comments <= 75:
+                            k=-0.274
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        if percentage_of_negative_comments > 75  and percentage_of_negative_comments <= 85:
+                            k=-0.14
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        else:
+                            k=-0.062
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+elif(mean_of_negative_polarity_comments >=(-0.3) and mean_of_negative_polarity_comments < (-0.2)):
+    if percentage_of_negative_comments >= 10 and percentage_of_negative_comments <= 25:
+        k=-0.39
+        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+        print(cs_of_comments)
+    else:
+        if percentage_of_negative_comments > 25 and percentage_of_negative_comments <= 35:
+            k=-0.46
+            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+            print(cs_of_comments)
+        else:
+            if percentage_of_negative_comments > 35 and percentage_of_negative_comments <= 45:
+                k=-0.495
+                cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                print(cs_of_comments)
+            else:
+                if percentage_of_negative_comments > 45  and percentage_of_negative_comments <= 55:
+                    k=-0.516
+                    cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                    print(cs_of_comments)
+                else:
+                    if percentage_of_negative_comments > 55  and percentage_of_negative_comments <= 65:
+                        k=-0.33
+                        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                        print(cs_of_comments)
+                    else:
+                        if percentage_of_negative_comments > 65  and percentage_of_negative_comments <= 75:
+                            k=-0.197
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        if percentage_of_negative_comments > 75  and percentage_of_negative_comments <= 85:
+                            k=-0.097
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        else:
+                            k=-0.043
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+elif(mean_of_negative_polarity_comments >=(-0.2) and mean_of_negative_polarity_comments < (-0.1)):
+    if percentage_of_negative_comments >= 10 and percentage_of_negative_comments <= 25:
+        k=-0.24
+        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+        print(cs_of_comments)
+    else:
+        if percentage_of_negative_comments > 25 and percentage_of_negative_comments <= 35:
+            k=-0.29
+            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+            print(cs_of_comments)
+        else:
+            if percentage_of_negative_comments > 35 and percentage_of_negative_comments <= 45:
+                k=-0.2
+                cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                print(cs_of_comments)
+            else:
+                if percentage_of_negative_comments > 45  and percentage_of_negative_comments <= 55:
+                    k=-0.336
+                    cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                    print(cs_of_comments)
+                else:
+                    if percentage_of_negative_comments > 55  and percentage_of_negative_comments <= 65:
+                        k=-0.213
+                        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                        print(cs_of_comments)
+                    else:
+                        if percentage_of_negative_comments > 65  and percentage_of_negative_comments <= 75:
+                            k=-0.125
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        if percentage_of_negative_comments > 75  and percentage_of_negative_comments <= 85:
+                            k=-0.06
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        else:
+                            k=-0.026
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+elif(mean_of_negative_polarity_comments >=(-0.1) and mean_of_negative_polarity_comments < (0)):
+    if percentage_of_negative_comments >= 10 and percentage_of_negative_comments <= 15:
+        k=-0.1
+        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+        print(cs_of_comments)
+    else:
+        if percentage_of_negative_comments > 15 and percentage_of_negative_comments <= 25:
+            k=-0.11
+            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+            print(cs_of_comments)
+        else:
+            if percentage_of_negative_comments > 25 and percentage_of_negative_comments <= 35:
+                k=-0.14
+                cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                print(cs_of_comments)
+            else:
+                if percentage_of_negative_comments > 35  and percentage_of_negative_comments <= 45:
+                    k=-0.155
+                    cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                    print(cs_of_comments)
+                else:
+                    if percentage_of_negative_comments > 45  and percentage_of_negative_comments <= 55:
+                        k=-0.164
+                        cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                        print(cs_of_comments)
+                    else:
+                        if percentage_of_negative_comments > 55  and percentage_of_negative_comments <= 65:
+                            k=-0.103
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        if percentage_of_negative_comments > 65  and percentage_of_negative_comments <= 75:
+                            k=-0.06
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        if percentage_of_negative_comments > 75  and percentage_of_negative_comments <= 85:
+                            k=-0.0275
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+                        else:
+                            k=-0.011
+                            cs_of_comments = (percentage_of_negative_comments*k)/(mean_of_negative_polarity_comments*100)
+                            print(cs_of_comments)
+
+#print(cs_of_comments)
+
+cs_of_sentences
+cs_of_news_or_event = ((cs_of_comments + cs_of_sentences) / 2)
+print(cs_of_news_or_event)
+
+with open('tweetcsv/demo/demo2_Final_CS_Result_Table.csv', 'a', newline='') as csvFile:
+    fieldnames = ['News_or_Events', 'Percentage_of_Negative_Comments', 'Mean_of_Negative_Polarity_Comments',
+                  'Percentage_of_Negative_Sentences', 'Mean_Negative_Polarity_Sentences', 'Controversy_Score_Comments',
+                  'Controversy_Score_Sentences', 'Final_Controversy_Score']
+    writer = csv.DictWriter(csvFile, fieldnames=fieldnames)
+
+    writer.writerows([{'News_or_Events': "spot settling in IPL", 'Percentage_of_Negative_Comments': percentage_of_negative_comments,
+                       'Mean_of_Negative_Polarity_Comments': mean_of_negative_polarity_comments,
+                       'Percentage_of_Negative_Sentences': per_n_s,
+                       'Mean_Negative_Polarity_Sentences': m_n_polarity_s,
+                       'Controversy_Score_Comments': cs_of_comments,
+                       'Controversy_Score_Sentences': cs_of_sentences,
+                       'Final_Controversy_Score': cs_of_news_or_event}])
